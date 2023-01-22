@@ -11,8 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Dependency directories (remove the comment below to include it)
 # Dependency directories
+secrets/
 test/
 vendor/
 
@@ -20,3 +20,6 @@ vendor/
 .DS_Store
 Thumbs.db
 .idea
+
+## Stanalone files
+paths.go

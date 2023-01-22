@@ -2,7 +2,7 @@ package tasks
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -15,27 +15,10 @@ type Blog struct {
 	Registered  string `json:"registered"`
 }
 
-const (
-	// Test URL's and PATH
-	testURL    = "test.blog.gov.bc.ca"
-	engTestURL = "test.engage.gov.bc.ca"
-	vanTestURL = "test.vanity.blog.gov.bc.ca"
-	testPATH   = "test_blog_gov_bc_ca"
-
-	// Production URL's
-	stagURL = "staging.blog.gov.bc.ca"
-	gwwURL  = "gww.blog.gov.bc.ca"
-	prodURL = "engage.gov.bc.ca"
-
-	// Production PATH's
-	stagPATH = "staging_blog_gov_bc_ca"
-	gwwPATH  = "gww_blog_gov_bc_ca"
-	prodPATH = "blog_gov_bc_ca"
-)
-
 var (
-	testID, stagID, prodID       string
-	testBLOG, stagBLOG, prodBLOG []Blog
+	testList, stageList, prodList []Blog
+	testID, stageID, prodID       string
+	test, stage, prod             Blog
 
 	flag = os.Args[1]
 	site = os.Args[2]
@@ -51,15 +34,18 @@ Flags:
 func Prepare() {
 	switch flag {
 	case "s2p":
-		stagBLOG = parseJSON(stagURL, stagPATH)
-		stagID = aquireID("https://"+stagURL+"/"+site+"/", stagBLOG)
+		stageList = parseJSON(stageURL, stagePath)
+		stage = aquireID("https://"+stageURL+"/"+site+"/", stageList)
+		backupDB(stagePath)
 	case "p2s":
-		prodBLOG = parseJSON(prodURL, prodPATH)
-		prodID = aquireID("https://"+prodURL+"/"+site+"/", prodBLOG)
+		prodList = parseJSON(prodURL, prodPath)
+		prod = aquireID("https://"+prodURL+"/"+site+"/", prodList)
+		backupDB(prodPath)
 	default:
-		testBLOG = parseJSON(testURL, testPATH)
-		testID = aquireID("http://test.engage.gov.bc.ca/"+site+"/", testBLOG)
-		fmt.Println(testID)
+		testList = parseJSON(testURL, testPATH)
+		test = aquireID("http://test.engage.gov.bc.ca/"+site+"/", testList)
+		exportDB(test.URL)
+		flush()
 	}
 }
 
@@ -68,43 +54,48 @@ func parseJSON(url, path string) []Blog {
 	var blog []Blog
 	query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json").Output()
 	json.Unmarshal(query, &blog)
-	// query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url).Output()
-	// errors(os.WriteFile("site-list.json", query, 0644))
-	// grep, _ = exec.Command("grep", site, "site-list.txt").Output()
-	// before, _, _ := strings.Cut(string(grep), "h")
-	// id := strings.TrimSpace(before)
 	return blog
 }
 
 // Search the blog structure to find the ID that matches the supplied URL
-func aquireID(url string, blog []Blog) string {
-	var id string
-	for _, item := range blog {
+func aquireID(url string, blogs []Blog) Blog {
+	var blog Blog
+	for _, item := range blogs {
 		if item.URL == url {
-			id = item.BlogID
+			blog.BlogID = item.BlogID
+			blog.LastUpdated = item.LastUpdated
+			blog.Registered = item.Registered
+			blog.URL = item.URL
 		}
 	}
-	return id
+	return blog
 }
 
 // Export the database tables
 func exportDB(furl string) {
-	exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+furl+"/"+site, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+site+".sql").Run()
+	c1, err := exec.Command("wp db tables", "--url="+furl+"--all-tables-with-prefix --format=csv").Output()
+	errors(err)
+	exec.Command("wp", "db", "export", "--tables=$("+string(c1)+")", "--quiet", "/data/temp/"+site+".sql").Run()
+	// exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+furl, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+site+".sql").Run()
 }
 
 // Create a user export file
-func exportUsers(furl string) {
-	exec.Command("user_export.py", "-p", "current/web/wp", "-u", furl+"/"+site, "-o", "/data/temp/"+site+".json").Run()
+func exportUsers(furl, path string) {
+	exec.Command("/data/scripts/user_export.py", "-p", "/data/www-app/"+path+"/current/web/wp", "-u", furl, "-o", "/data/temp/"+site+".json").Run()
+}
+
+func createSite(url, title, email string) {
+	exec.Command("wp", "site", "create", "--url="+url, "--title="+title, "--email="+email, "--quiet").Run()
 }
 
 // Import the data
 func importDB() {
-	exec.Command("wp", "db", "import", "/data/temp/"+site+".sql").Run()
+	exec.Command("wp", "db", "import", "/data/temp/"+site+".sql", "--quiet").Run()
 }
 
 // Backup the database
 func backupDB(path string) {
-	exec.Command("wp", "db", "export", "--path=/data/www-app/"+path, "/data/temp/backup.sql").Run()
+	exec.Command("wp", "db", "export", "--path=/data/www-app/"+path+"/current/web/wp", "/data/temp/backup.sql", "--quiet").Run()
 }
 
 // Take the blog_id from (fid) the old site and send it to (tid) the new one to be replaced
@@ -114,30 +105,37 @@ func replaceIDs(fid, tid string) {
 
 // Copy the site assets over
 func assetCopy(fpath, fid, tpath, tid string) {
-	exec.Command("rsync", "-a", "/data/www-assets/"+fpath+"/uploads/sites/"+fid+"/", "/data/www-assets/"+tpath+"/uploads/sites/"+tid+"/", "--stats").Run()
+	exec.Command("rsync", "-a", "/data/www-assets/"+fpath+"/uploads/sites/"+fid+"/", "/data/www-assets/"+tpath+"/uploads/sites/"+tid+"/").Run()
 }
 
 // Correct the links with search-replace
 func linkFix(furl, turl string) {
-	exec.Command("wp", "search-replace", "--url="+turl+"/"+site, "--all-tables-with-prefix", furl, turl).Run()
+	exec.Command("wp", "search-replace", "--url="+turl, "--all-tables-with-prefix", furl, turl, "--quiet").Run()
 }
 
 // Catch any lingering http addresses
 func httpFind(turl string) {
-	exec.Command("wp", "search-replace", "--url="+turl+"/"+site, "--all-tables-with-prefix", "http://", "https://").Run()
+	exec.Command("wp", "search-replace", "--url="+turl, "--all-tables-with-prefix", "http://", "https://", "--quiet").Run()
 }
 
 // Correct the uploads folder references
 func folderRef(turl, fid, tid string) {
-	exec.Command("wp", "search-replace", "--url="+turl+"/"+site, "--all-tables-with-prefix", "app/uploads/sites/"+fid, "app/uploads/sites/"+tid).Run()
+	exec.Command("wp", "search-replace", "--url="+turl, "--all-tables-with-prefix", "app/uploads/sites/"+fid, "app/uploads/sites/"+tid, "--quiet").Run()
 }
 
 // Remap the users to match their new ID
 func remap(turl string) {
-	exec.Command("user_import.py", "-p", "current/web/wp", "-u", turl+"/"+site, "-i ", "/data/temp/"+site+".json").Run()
+	exec.Command("user_import.py", "-p", "current/web/wp", "-u", turl, "-i ", "/data/temp/"+site+".json", "--quiet").Run()
 }
 
 // Flush the WordPress cache
 func flush() {
-	exec.Command("wp", "cache", "flush").Run()
+	exec.Command("wp", "cache", "flush", "--quiet").Run()
+}
+
+// Check for errors, halt the program if found, and log the result
+func errors(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
