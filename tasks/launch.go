@@ -52,9 +52,8 @@ func Prepare() {
 		destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object
 	default:
 		testList = parseJSON(testURL, testPath)
-		testObj = aquireID("http://test.engage.gov.bc.ca/"+siteName+"/", testList)
+		sourceOBJ = aquireID("http://test.engage.gov.bc.ca/"+siteName+"/", testList)
 		first()
-		// second(testObj, testPath)
 	}
 	second()
 	dryruns()
@@ -76,9 +75,15 @@ func second() {
 }
 
 func dryruns() {
+	title("|U| |P| |D| |A| |T| |E| | | |U| |R| |L| |S|")
 	direct(confirm(linkFixDR()), "lf")
+	title("|C| |O| |P| |Y| | | |A| |S| |S| |E| |T| |S|")
 	direct(confirm(assetCopyDR(sourceOBJ.BlogID, destOBJ.BlogID)), "ac")
-	direct(confirm(folderRefDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
+	title("|F| |I| |X| | | |U| |P| |L| |O| |A| |D| |S|")
+	direct(confirm(uploadsFolderDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
+	title("|F| |I| |X| | | |E| |S| |C| |A| |P| |E| |S|")
+	direct(confirm(uploadsFolderEscapesDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr2")
+	title("|F| |I| |X| | | |H| |T| |T| |P| |:| |/| |/|")
 	direct(confirm(httpFindDR()), "hf")
 }
 
@@ -122,6 +127,7 @@ func exportUsers() {
 	exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
 }
 
+// Create the new WordPress site
 func createSite(title, email string) {
 	exec.Command("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email, "--quiet").Run()
 }
@@ -151,13 +157,13 @@ func assetCopy(sid, did string) {
 	exec.Command("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/").Run()
 }
 
-// Correct the uploads folder references
-func folderRef(sid, did string) {
+// Correct the references to the uploads folder
+func uploadsFolder(sid, did string) {
 	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did, "--quiet").Run()
 }
 
-// Correct the uploads folder references
-func folderRef2(sid, did string) {
+// Correct any unescaped folders due to Gutenberg Blocks
+func uploadsFolderEscapes(sid, did string) {
 	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did, "--quiet").Run()
 }
 
