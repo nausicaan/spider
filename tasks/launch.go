@@ -20,7 +20,7 @@ var (
 	siteName = os.Args[2]
 
 	testID, stageID, prodID                  string
-	testObj, stageObj, prodObj               Blog
+	testObj, sourceOBJ, destOBJ              Blog
 	testList, stageList, prodList            []Blog
 	sourcePath, sourceURL, destPath, destURL string
 )
@@ -35,47 +35,54 @@ Flags:
 func Prepare() {
 	switch flag {
 	case "s2p":
-		sourcePath, sourceURL = stagePath, stageURL                           //transfer secret constants to main code
-		stageList = parseJSON(sourceURL, sourcePath)                          // List of Stagging sites in JSON format
-		stageObj = aquireID("https://"+sourceURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object, returns only the BlogID
-		first(stageObj)
+		sourcePath, sourceURL = stagePath, stageURL                            //transfer secret constants to main code
+		stageList = parseJSON(sourceURL, sourcePath)                           // List of Stagging sites in JSON format
+		sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object
+		first()
 		destPath, destURL = prodPath, prodURL                             //transfer secret constants to main code
 		prodList = parseJSON(destURL, destPath)                           // List of Production sites in JSON format
-		prodObj = aquireID("https://"+destURL+"/"+siteName+"/", prodList) // The specific Production object, returns only the BlogID
-		second(stageObj, prodObj)
+		destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", prodList) // The specific Production object
 	case "p2s":
-		sourcePath, sourceURL = prodPath, prodURL                           //transfer secret constants to main code
-		prodList = parseJSON(sourceURL, sourcePath)                         // List of Production sites in JSON format
-		prodObj = aquireID("https://"+sourceURL+"/"+siteName+"/", prodList) // The specific Production object, returns only the BlogID
-		first(prodObj)
-		destPath, destURL = stagePath, stageURL                             //transfer secret constants to main code
-		stageList = parseJSON(destURL, destPath)                            // List of Stagging sites in JSON format
-		stageObj = aquireID("https://"+destURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object, returns only the BlogID
-		second(prodObj, stageObj)
+		sourcePath, sourceURL = prodPath, prodURL                             //transfer secret constants to main code
+		prodList = parseJSON(sourceURL, sourcePath)                           // List of Production sites in JSON format
+		sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", prodList) // The specific Production object
+		first()
+		destPath, destURL = stagePath, stageURL                            //transfer secret constants to main code
+		stageList = parseJSON(destURL, destPath)                           // List of Stagging sites in JSON format
+		destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object
 	default:
 		testList = parseJSON(testURL, testPath)
 		testObj = aquireID("http://test.engage.gov.bc.ca/"+siteName+"/", testList)
-		first(testObj)
+		first()
 		// second(testObj, testPath)
 	}
+	second()
+	dryruns()
+	last()
 }
 
 // Run the first few functions up to the new site creation
-func first(source Blog) {
-	exportDB(source.URL)
+func first() {
+	exportDB(sourceOBJ.URL)
 	exportUsers()
 	createSite(siteName, adminEmail)
 }
 
 // Run the remaining functions after being able to grab the new site ID
-func second(source, dest Blog) {
+func second() {
 	backupDB()
-	replaceIDs(source.BlogID, dest.BlogID)
+	replaceIDs(sourceOBJ.BlogID, destOBJ.BlogID)
 	importDB()
-	linkFix()
-	assetCopy(source.BlogID, dest.BlogID)
-	folderRef(source.BlogID, dest.BlogID)
-	httpFind()
+}
+
+func dryruns() {
+	direct(confirm(linkFixDR()), "lf")
+	direct(confirm(assetCopyDR(sourceOBJ.BlogID, destOBJ.BlogID)), "ac")
+	direct(confirm(folderRefDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
+	direct(confirm(httpFindDR()), "hf")
+}
+
+func last() {
 	remap()
 	flush()
 }
