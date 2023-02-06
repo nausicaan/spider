@@ -1,6 +1,6 @@
-# Deploy WordPress Site
+# Spider
 
-Automate the process of launching a site and transfering database assets to a new WordPress Domain.
+Spider is a WordPress website (blog) deployment tool. It Automates the process of launching and transfering database assets to a new WordPress blog site.
 
 ## Prerequisites
 
@@ -12,30 +12,30 @@ From the root folder containing *main.go*, use the command that matches your env
 
 ### Windows & Mac:
 
-```bash
-go build -o <build_location>/<program_name> main.go
+```console
+go build -o [name] main.go
 ```
 
 ### Linux:
 
-```bash
-GOOS=linux GOARCH=amd64 go build -o <build_location>/<program_name> main.go
+```console
+GOOS=linux GOARCH=amd64 go build -o [name] main.go
 ```
 
 ## Run
 
-```bash
-<build_location>/<program_name> <flag> <new_website_slug>
+```console
+[build_location]/[program_name] [flag] [new_website_slug]
 ```
 
 ## Example
 
 ### Staging to Production:
 
-```bash
-~/Documents/programs/deploy -s2p antiracism
+```console
+~/Documents/programs/spider -s2p antiracism
 ```
 
 ## License
 
-Code is distributed under [The Unlicense](https://github.com/nausicaan/deploy/blob/main/LICENSE.md) and is part of the Public Domain.
+Code is distributed under [The Unlicense](https://github.com/nausicaan/spider/blob/main/LICENSE.md) and is part of the Public Domain.
