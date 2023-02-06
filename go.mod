@@ -1,3 +1,3 @@
-module github.com/nausicaan/deploy
+module github.com/nausicaan/spider
 
 go 1.19

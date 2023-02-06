@@ -1,7 +1,7 @@
 package main
 
 import (
-	t "github.com/nausicaan/deploy/tasks"
+	t "github.com/nausicaan/spider/tasks"
 )
 
 func main() {
