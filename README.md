@@ -25,15 +25,21 @@ GOOS=linux GOARCH=amd64 go build -o [name] main.go
 ## Run
 
 ```console
-[build_location]/[program_name] [flag] [new_website_slug]
+[program] [flag] [website_slug]
 ```
 
-## Example
+## Flags
 
-### Staging to Production:
+Current flages are:
+
+- s2p - Staging to Production and
+
+- p2s - Production to Staging
+
+Example deployment:
 
 ```console
-~/Documents/programs/spider -s2p antiracism
+spider -s2p antiracism
 ```
 
 ## License

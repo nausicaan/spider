@@ -16,7 +16,7 @@ const (
 
 var reader = bufio.NewReader(os.Stdin)
 
-// ### Dry Run Functions ###
+/* ##### Dry Run Functions ##### */
 
 // Correct the links with search-replace --dry-run
 func linkFixDR() string {
