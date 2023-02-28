@@ -81,14 +81,14 @@ func proceed(action string) {
 // Solicite user confirmation after completion of a --dry-run
 func confirm(d string) string {
 	fmt.Println(d)
-	answer := getInput("Does this output seem acceptable, shall we continue without the --dry-run flag?")
+	answer := question("Does this output seem acceptable, shall we continue without the --dry-run flag?")
 	return answer
 }
 
 // Get user input via screen prompt
-func getInput(prompt string) string {
+func question(prompt string) string {
 	fmt.Print("\n ", prompt)
 	userInput, _ := reader.ReadString('\n')
-	userInput = strings.TrimSpace(userInput)
-	return userInput
+	// userInput = strings.TrimSpace(userInput)
+	return strings.TrimSpace(userInput)
 }
