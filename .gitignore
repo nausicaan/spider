@@ -16,10 +16,10 @@ secrets/
 test/
 vendor/
 
-## Default desktop settings files
+# Default desktop settings files
 .DS_Store
 Thumbs.db
 .idea
 
-## Stanalone files
-paths.go
+# Standalone files
+local.go

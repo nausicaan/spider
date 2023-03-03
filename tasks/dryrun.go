@@ -89,6 +89,5 @@ func confirm(d string) string {
 func question(prompt string) string {
 	fmt.Print("\n ", prompt)
 	userInput, _ := reader.ReadString('\n')
-	// userInput = strings.TrimSpace(userInput)
 	return strings.TrimSpace(userInput)
 }

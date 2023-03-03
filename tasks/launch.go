@@ -22,7 +22,6 @@ var (
 	testID, stageID, prodID                  string
 	testObj, sourceOBJ, destOBJ              Blog
 	sourcePath, sourceURL, destPath, destURL string
-	// testList, stageList, prodList            []Blog
 )
 
 /*
@@ -36,27 +35,13 @@ func Prepare() {
 	switch flag {
 	case "s2p":
 		source(stagePath, stageURL)
-		// sourcePath, sourceURL = stagePath, stageURL                            //transfer secret constants to main code
-		// stageList = parseJSON(sourceURL, sourcePath)                           // List of Stagging sites in JSON format
-		// sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object
 		first()
 		destination(prodPath, prodURL)
-		// destPath, destURL = prodPath, prodURL                             //transfer secret constants to main code
-		// prodList = parseJSON(destURL, destPath)                           // List of Production sites in JSON format
-		// destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", prodList) // The specific Production object
 	case "p2s":
 		source(prodPath, prodURL)
-		// sourcePath, sourceURL = prodPath, prodURL                             //transfer secret constants to main code
-		// prodList = parseJSON(sourceURL, sourcePath)                           // List of Production sites in JSON format
-		// sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", prodList) // The specific Production object
 		first()
 		destination(stagePath, stageURL)
-		// destPath, destURL = stagePath, stageURL                            //transfer secret constants to main code
-		// stageList = parseJSON(destURL, destPath)                           // List of Stagging sites in JSON format
-		// destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", stageList) // Creates a specific Stagging object
 	default:
-		// testList = parseJSON(testURL, testPath)
-		// sourceOBJ = aquireID("http://test.engage.gov.bc.ca/"+siteName+"/", testList)
 		first()
 	}
 	second()
@@ -72,15 +57,15 @@ func first() {
 }
 
 func source(path, url string) {
-	sourcePath, sourceURL = path, url                                       //transfer secret constants to main code
-	sourceList := parseJSON(sourceURL, sourcePath)                          // List of Stagging sites in JSON format
-	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific Stagging object
+	sourcePath, sourceURL = path, url                                       //transfer local constants to main code
+	sourceList := parseJSON(sourceURL, sourcePath)                          // List of source sites in JSON format
+	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific source object
 }
 
 func destination(path, url string) {
-	destPath, destURL = path, url                                     //transfer secret constants to main code
-	destList := parseJSON(destURL, destPath)                          // List of Production sites in JSON format
-	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific Production object
+	destPath, destURL = path, url                                     //transfer local constants to main code
+	destList := parseJSON(destURL, destPath)                          // List of destination sites in JSON format
+	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
 }
 
 // Run the remaining functions after being able to grab the new site ID
