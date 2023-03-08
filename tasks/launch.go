@@ -2,9 +2,7 @@ package tasks
 
 import (
 	"encoding/json"
-	"log"
 	"os"
-	"os/exec"
 )
 
 // Blog holds converted json data
@@ -45,7 +43,7 @@ func Prepare() {
 		first()
 	}
 	second()
-	dryruns()
+	dryrun()
 	last()
 }
 
@@ -58,13 +56,13 @@ func first() {
 
 func source(path, url string) {
 	sourcePath, sourceURL = path, url                                       //transfer local constants to main code
-	sourceList := parseJSON(sourceURL, sourcePath)                          // List of source sites in JSON format
+	sourceList := construct(sourceURL, sourcePath)                          // List of source sites in JSON format
 	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific source object
 }
 
 func destination(path, url string) {
 	destPath, destURL = path, url                                     //transfer local constants to main code
-	destList := parseJSON(destURL, destPath)                          // List of destination sites in JSON format
+	destList := construct(destURL, destPath)                          // List of destination sites in JSON format
 	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
 }
 
@@ -75,7 +73,7 @@ func second() {
 	importDB()
 }
 
-func dryruns() {
+func dryrun() {
 	title("|U| |P| |D| |A| |T| |E| | | |U| |R| |L| |S|")
 	direct(confirm(linkFixDR()), "lf")
 	title("|C| |O| |P| |Y| | | |A| |S| |S| |E| |T| |S|")
@@ -94,9 +92,10 @@ func last() {
 }
 
 // Query WordPress for a list of all sites and map the json data to a struct array
-func parseJSON(url, path string) []Blog {
+func construct(url, path string) []Blog {
 	var blog []Blog
-	query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json").Output()
+	// query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json").Output()
+	query := byteme("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json")
 	json.Unmarshal(query, &blog)
 	return blog
 }
@@ -117,70 +116,82 @@ func aquireID(url string, blogs []Blog) Blog {
 
 // Export the database tables
 func exportDB(sourceURL string) {
-	sub, err := exec.Command("wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv").Output()
-	if err != nil {
-		log.Fatal(err)
-	}
-	exec.Command("wp", "db", "export", "--tables=$("+string(sub)+")", "--quiet", "/data/temp/"+siteName+".sql").Run()
+	sub := byteme("wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
+	verbose("wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
+	// exec.Command("wp", "db", "export", "--tables=$("+string(sub)+")", "--quiet", "/data/temp/"+siteName+".sql").Run()
 	// exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+sourceURL, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+siteName+".sql").Run()
 }
 
 // Create a user export file
 func exportUsers() {
-	exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
+	// exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
+	// verbose("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json")
+	people := byteme("wp", "user", "list", "--url="+sourceURL, "--path="+"/data/www-app/"+sourcePath+"/current/web/wp", "--format=json")
+	problems(os.WriteFile("/data/temp/"+siteName+".json", people, 0666))
 }
 
 // Create the new WordPress site
 func createSite(title, email string) {
-	exec.Command("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email, "--quiet").Run()
+	// exec.Command("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email, "--quiet").Run()
+	verbose("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email)
 }
 
 // Backup the database
 func backupDB() {
-	exec.Command("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql", "--quiet").Run()
+	// exec.Command("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql", "--quiet").Run()
+	verbose("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql")
 }
 
 // Take the blog_id from the source (sid) and send it to the destination (did) to be replaced
 func replaceIDs(sid, did string) {
-	exec.Command("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql").Run()
+	// exec.Command("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql").Run()
+	verbose("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql")
 }
 
 // Import the data
 func importDB() {
-	exec.Command("wp", "db", "import", "/data/temp/"+siteName+".sql", "--quiet").Run()
+	// exec.Command("wp", "db", "import", "/data/temp/"+siteName+".sql", "--quiet").Run()
+	verbose("wp", "db", "import", "/data/temp/"+siteName+".sql")
 }
 
 // Correct the links with search-replace
 func linkFix() {
-	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL, "--quiet").Run()
+	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL, "--quiet").Run()
+	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL)
 }
 
 // Copy the site assets over
 func assetCopy(sid, did string) {
-	exec.Command("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/").Run()
+	// exec.Command("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/").Run()
+	verbose("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/")
 }
 
 // Correct the references to the uploads folder
 func uploadsFolder(sid, did string) {
-	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did, "--quiet").Run()
+	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did, "--quiet").Run()
+	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did)
 }
 
 // Correct any unescaped folders due to Gutenberg Blocks
 func uploadsFolderEscapes(sid, did string) {
-	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did, "--quiet").Run()
+	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did, "--quiet").Run()
+	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did)
 }
 
 // Catch any lingering http addresses
 func httpFind() {
-	exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://", "--quiet").Run()
+	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://", "--quiet").Run()
+	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://")
 }
 
 // Remap the users to match their new ID
 func remap() {
-	exec.Command("/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json").Run()
+	// exec.Command("/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json").Run()
+	verbose("/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json")
 }
 
 // Flush the WordPress cache
 func flush() {
-	exec.Command("wp", "cache", "flush", "--quiet").Run()
+	// exec.Command("wp", "cache", "flush", "--quiet").Run()
+	verbose("wp", "cache", "flush")
 }
