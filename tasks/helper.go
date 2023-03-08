@@ -9,9 +9,11 @@ import (
 )
 
 const (
-	// Colour palette.
-	colorReset     = "\033[0m"
-	fgBrightYellow = "\033[93m"
+	automatic      string = "\033[0m"
+	bgRed          string = "\033[41m"
+	fgYellow       string = "\033[33m"
+	fgBrightYellow string = "\033[93m"
+	halt           string = "program halted "
 )
 
 var reader = bufio.NewReader(os.Stdin)
@@ -30,30 +32,43 @@ func verbose(name string, task ...string) {
 	osCmd.Stdout = os.Stdout
 	osCmd.Stderr = os.Stderr
 	err = osCmd.Run()
-	problems(err)
+	inspect(err)
 }
 
 // Run a terminal command, then capture and return the output as a byte
 func byteme(name string, task ...string) []byte {
 	path, err := exec.LookPath(name)
-	problems(err)
+	inspect(err)
 	osCmd, _ := exec.Command(path, task...).CombinedOutput()
 	return osCmd
 }
 
 // Check for errors, print the result if found
-func problems(err error) {
+func inspect(err error) {
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 }
 
+/*
 // The title function displays a section header
 func title(content string) {
 	fmt.Println(fgBrightYellow, "+-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+")
 	fmt.Println(content)
-	fmt.Println("+-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+" + colorReset)
+	fmt.Println("+-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+" + automatic)
+}
+*/
+
+// Print a colourized error message
+func alert(message string) {
+	fmt.Println(bgRed, message, halt, automatic)
+}
+
+// Provide and highlight an informational message
+func tracking(message string) {
+	fmt.Println(fgYellow)
+	fmt.Println("**", automatic, message, fgYellow, "**", automatic)
 }
 
 // Tell the program what to do based on the results of a --dry-run

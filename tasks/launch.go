@@ -49,8 +49,11 @@ func Prepare() {
 
 // Run the first few functions up to the new site creation
 func first() {
+	tracking("Exporting the database tables")
 	exportDB(sourceOBJ.URL)
+	tracking("Creating a user export file")
 	exportUsers()
+	tracking("Creating the new WordPress site")
 	createSite(siteName, adminEmail)
 }
 
@@ -66,28 +69,39 @@ func destination(path, url string) {
 	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
 }
 
-// Run the remaining functions after being able to grab the new site ID
+// Run the second round of functions after being able to grab the new site ID
 func second() {
+	tracking("Backing up the database")
 	backupDB()
+	tracking("Replacing the destination blog_id with that of the source")
 	replaceIDs(sourceOBJ.BlogID, destOBJ.BlogID)
+	tracking("Importing the database tables")
 	importDB()
 }
 
 func dryrun() {
-	title("|U| |P| |D| |A| |T| |E| | | |U| |R| |L| |S|")
+	tracking("Updating URL's")
+	// title("|U| |P| |D| |A| |T| |E| | | |U| |R| |L| |S|")
 	direct(confirm(linkFixDR()), "lf")
-	title("|C| |O| |P| |Y| | | |A| |S| |S| |E| |T| |S|")
+	tracking("Copying Assets")
+	// title("|C| |O| |P| |Y| | | |A| |S| |S| |E| |T| |S|")
 	direct(confirm(assetCopyDR(sourceOBJ.BlogID, destOBJ.BlogID)), "ac")
-	title("|F| |I| |X| | | |U| |P| |L| |O| |A| |D| |S|")
+	tracking("Fixing Uploads")
+	// title("|F| |I| |X| | | |U| |P| |L| |O| |A| |D| |S|")
 	direct(confirm(uploadsFolderDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
-	title("|F| |I| |X| | | |E| |S| |C| |A| |P| |E| |S|")
+	tracking("Fixing Escapes")
+	// title("|F| |I| |X| | | |E| |S| |C| |A| |P| |E| |S|")
 	direct(confirm(uploadsFolderEscapesDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr2")
-	title("|F| |I| |X| | | |H| |T| |T| |P| |:| |/| |/|")
+	tracking("Fixing HTTP References")
+	// title("|F| |I| |X| | | |H| |T| |T| |P| |:| |/| |/|")
 	direct(confirm(httpFindDR()), "hf")
 }
 
+// Run the remaining functions
 func last() {
+	tracking("Remaping the users to match their new ID")
 	remap()
+	tracking("Flushing the WordPress cache")
 	flush()
 }
 
@@ -127,7 +141,7 @@ func exportUsers() {
 	// exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
 	// verbose("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json")
 	people := byteme("wp", "user", "list", "--url="+sourceURL, "--path="+"/data/www-app/"+sourcePath+"/current/web/wp", "--format=json")
-	problems(os.WriteFile("/data/temp/"+siteName+".json", people, 0666))
+	inspect(os.WriteFile("/data/temp/"+siteName+".json", people, 0666))
 }
 
 // Create the new WordPress site
@@ -142,13 +156,13 @@ func backupDB() {
 	verbose("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql")
 }
 
-// Take the blog_id from the source (sid) and send it to the destination (did) to be replaced
+// Replace the destination (did) blog_id with that of the source (sid)
 func replaceIDs(sid, did string) {
 	// exec.Command("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql").Run()
 	verbose("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql")
 }
 
-// Import the data
+// Import the database tables
 func importDB() {
 	// exec.Command("wp", "db", "import", "/data/temp/"+siteName+".sql", "--quiet").Run()
 	verbose("wp", "db", "import", "/data/temp/"+siteName+".sql")
