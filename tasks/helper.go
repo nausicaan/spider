@@ -14,6 +14,9 @@ const (
 	fgYellow       string = "\033[33m"
 	fgBrightYellow string = "\033[93m"
 	halt           string = "program halted "
+	zero           string = "Insufficient arguments supplied -"
+	many           string = "Too many arguments supplied -"
+	huh            string = "Unrecognized flag detected -"
 )
 
 var reader = bufio.NewReader(os.Stdin)
@@ -51,22 +54,14 @@ func inspect(err error) {
 	}
 }
 
-/*
-// The title function displays a section header
-func title(content string) {
-	fmt.Println(fgBrightYellow, "+-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+")
-	fmt.Println(content)
-	fmt.Println("+-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+" + automatic)
-}
-*/
-
 // Print a colourized error message
 func alert(message string) {
-	fmt.Println(bgRed, message, halt, automatic)
+	fmt.Println(bgRed, message, halt)
+	fmt.Println(automatic)
 }
 
 // Provide and highlight an informational message
-func tracking(message string) {
+func banner(message string) {
 	fmt.Println(fgYellow)
 	fmt.Println("**", automatic, message, fgYellow, "**", automatic)
 }

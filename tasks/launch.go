@@ -14,10 +14,7 @@ type Blog struct {
 }
 
 var (
-	flag     = os.Args[1]
-	siteName = os.Args[2]
-
-	testID, stageID, prodID                  string
+	siteName, testID, stageID, prodID        string
 	testObj, sourceOBJ, destOBJ              Blog
 	sourcePath, sourceURL, destPath, destURL string
 )
@@ -26,35 +23,41 @@ var (
 Flags:
 	s2p - Staging to Production
 	p2s - Production to Staging
+	t2t - Test to Test
 */
 
 // Prepare function controls the flow of the program
 func Prepare() {
+	if len(os.Args) < 3 {
+		alert(zero)
+	} else if len(os.Args) > 3 {
+		alert(many)
+	} else {
+		quarterback()
+	}
+}
+func quarterback() {
+	flag := os.Args[1]
+	siteName = os.Args[2]
 	switch flag {
 	case "s2p":
 		source(stagePath, stageURL)
 		first()
 		destination(prodPath, prodURL)
+		receiver()
 	case "p2s":
 		source(prodPath, prodURL)
 		first()
 		destination(stagePath, stageURL)
-	default:
+		receiver()
+	case "t2t":
+		source(testPath, vanTestURL)
 		first()
+		destination(testPath, testURL)
+		receiver()
+	default:
+		alert(huh)
 	}
-	second()
-	dryrun()
-	last()
-}
-
-// Run the first few functions up to the new site creation
-func first() {
-	tracking("Exporting the database tables")
-	exportDB(sourceOBJ.URL)
-	tracking("Creating a user export file")
-	exportUsers()
-	tracking("Creating the new WordPress site")
-	createSite(siteName, adminEmail)
 }
 
 func source(path, url string) {
@@ -63,46 +66,20 @@ func source(path, url string) {
 	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific source object
 }
 
+// Run the first few functions up to the new site creation
+func first() {
+	banner("Exporting the database tables")
+	exportDB(sourceOBJ.URL)
+	banner("Creating a user export file")
+	exportUsers()
+	banner("Creating the new WordPress site")
+	createSite(siteName, adminEmail)
+}
+
 func destination(path, url string) {
 	destPath, destURL = path, url                                     //transfer local constants to main code
 	destList := construct(destURL, destPath)                          // List of destination sites in JSON format
 	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
-}
-
-// Run the second round of functions after being able to grab the new site ID
-func second() {
-	tracking("Backing up the database")
-	backupDB()
-	tracking("Replacing the destination blog_id with that of the source")
-	replaceIDs(sourceOBJ.BlogID, destOBJ.BlogID)
-	tracking("Importing the database tables")
-	importDB()
-}
-
-func dryrun() {
-	tracking("Updating URL's")
-	// title("|U| |P| |D| |A| |T| |E| | | |U| |R| |L| |S|")
-	direct(confirm(linkFixDR()), "lf")
-	tracking("Copying Assets")
-	// title("|C| |O| |P| |Y| | | |A| |S| |S| |E| |T| |S|")
-	direct(confirm(assetCopyDR(sourceOBJ.BlogID, destOBJ.BlogID)), "ac")
-	tracking("Fixing Uploads")
-	// title("|F| |I| |X| | | |U| |P| |L| |O| |A| |D| |S|")
-	direct(confirm(uploadsFolderDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
-	tracking("Fixing Escapes")
-	// title("|F| |I| |X| | | |E| |S| |C| |A| |P| |E| |S|")
-	direct(confirm(uploadsFolderEscapesDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr2")
-	tracking("Fixing HTTP References")
-	// title("|F| |I| |X| | | |H| |T| |T| |P| |:| |/| |/|")
-	direct(confirm(httpFindDR()), "hf")
-}
-
-// Run the remaining functions
-func last() {
-	tracking("Remaping the users to match their new ID")
-	remap()
-	tracking("Flushing the WordPress cache")
-	flush()
 }
 
 // Query WordPress for a list of all sites and map the json data to a struct array
@@ -126,6 +103,43 @@ func aquireID(url string, blogs []Blog) Blog {
 		}
 	}
 	return blog
+}
+
+func receiver() {
+	second()
+	dryrun()
+	last()
+}
+
+// Run the second round of functions after being able to grab the new site ID
+func second() {
+	banner("Backing up the database")
+	backupDB()
+	banner("Replacing the destination blog_id with that of the source")
+	replaceIDs(sourceOBJ.BlogID, destOBJ.BlogID)
+	banner("Importing the database tables")
+	importDB()
+}
+
+func dryrun() {
+	banner("Updating URL's")
+	direct(confirm(linkFixDR()), "lf")
+	banner("Copying Assets")
+	direct(confirm(assetCopyDR(sourceOBJ.BlogID, destOBJ.BlogID)), "ac")
+	banner("Fixing Uploads")
+	direct(confirm(uploadsFolderDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr")
+	banner("Fixing Escapes")
+	direct(confirm(uploadsFolderEscapesDR(sourceOBJ.BlogID, destOBJ.BlogID)), "fr2")
+	banner("Fixing HTTP References")
+	direct(confirm(httpFindDR()), "hf")
+}
+
+// Run the remaining functions
+func last() {
+	banner("Remaping the users to match their new ID")
+	remap()
+	banner("Flushing the WordPress cache")
+	flush()
 }
 
 // Export the database tables
