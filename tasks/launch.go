@@ -13,6 +13,7 @@ type Blog struct {
 	Registered  string `json:"registered"`
 }
 
+// Variable declarations
 var (
 	siteName, testID, stageID, prodID        string
 	testObj, sourceOBJ, destOBJ              Blog
@@ -26,17 +27,8 @@ Flags:
 	t2t - Test to Test
 */
 
-// Prepare function controls the flow of the program
-func Prepare() {
-	if len(os.Args) < 3 {
-		alert(zero)
-	} else if len(os.Args) > 3 {
-		alert(many)
-	} else {
-		quarterback()
-	}
-}
-func quarterback() {
+// Quarterback function controls the flow of the program
+func Quarterback() {
 	flag := os.Args[1]
 	siteName = os.Args[2]
 	switch flag {
@@ -56,10 +48,11 @@ func quarterback() {
 		destination(testPath, testURL)
 		receiver()
 	default:
-		alert(huh)
+		Alert(huh)
 	}
 }
 
+// Create the source object
 func source(path, url string) {
 	sourcePath, sourceURL = path, url                                       //transfer local constants to main code
 	sourceList := construct(sourceURL, sourcePath)                          // List of source sites in JSON format
@@ -76,6 +69,7 @@ func first() {
 	createSite(siteName, adminEmail)
 }
 
+// Create the destination object
 func destination(path, url string) {
 	destPath, destURL = path, url                                     //transfer local constants to main code
 	destList := construct(destURL, destPath)                          // List of destination sites in JSON format
@@ -105,6 +99,7 @@ func aquireID(url string, blogs []Blog) Blog {
 	return blog
 }
 
+// Trigger the rest of the program after passing through the Quarterback
 func receiver() {
 	second()
 	dryrun()
@@ -121,6 +116,7 @@ func second() {
 	importDB()
 }
 
+// Pre-emptively run the data modifying functions in --dry-run mode
 func dryrun() {
 	banner("Updating URL's")
 	direct(confirm(linkFixDR()), "lf")

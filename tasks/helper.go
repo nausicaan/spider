@@ -14,8 +14,6 @@ const (
 	fgYellow       string = "\033[33m"
 	fgBrightYellow string = "\033[93m"
 	halt           string = "program halted "
-	zero           string = "Insufficient arguments supplied -"
-	many           string = "Too many arguments supplied -"
 	huh            string = "Unrecognized flag detected -"
 )
 
@@ -38,6 +36,13 @@ func verbose(name string, task ...string) {
 	inspect(err)
 }
 
+// Run standard terminal commands and display the output
+func silent(name string, task ...string) {
+	path, err := exec.LookPath(name)
+	inspect(err)
+	err = exec.Command(path, task...).Run()
+}
+
 // Run a terminal command, then capture and return the output as a byte
 func byteme(name string, task ...string) []byte {
 	path, err := exec.LookPath(name)
@@ -52,12 +57,6 @@ func inspect(err error) {
 		fmt.Println(err)
 		return
 	}
-}
-
-// Print a colourized error message
-func alert(message string) {
-	fmt.Println(bgRed, message, halt)
-	fmt.Println(automatic)
 }
 
 // Provide and highlight an informational message
@@ -94,4 +93,10 @@ func confirm(d string) string {
 	fmt.Println(d)
 	answer := converse("Does this output seem acceptable, shall we continue without the --dry-run flag?")
 	return answer
+}
+
+// Alert prints a colourized error message
+func Alert(message string) {
+	fmt.Println(bgRed, message, halt)
+	fmt.Println(automatic)
 }
