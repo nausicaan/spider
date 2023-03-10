@@ -3,6 +3,8 @@ package tasks
 import (
 	"encoding/json"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 // Blog holds converted json data
@@ -13,10 +15,32 @@ type Blog struct {
 	Registered  string `json:"registered"`
 }
 
+// Platform holds the yaml data
+type Platform struct {
+	GWW        Website `yaml:"gww"`
+	Production Website `yaml:"production"`
+	Staging    Website `yaml:"staging"`
+	Test       Website `yaml:"test"`
+	Vanity     Website `yaml:"vanity"`
+	Email      Person  `yaml:"email"`
+}
+
+// Website holds the yaml data
+type Website struct {
+	URL  string `yaml:"url"`
+	Path string `yaml:"path"`
+}
+
+// Person holds the yaml data
+type Person struct {
+	Admin string `yaml:"admin"`
+}
+
 // Variable declarations
 var (
-	siteName, testID, stageID, prodID        string
+	websites                                 Platform
 	testObj, sourceOBJ, destOBJ              Blog
+	siteName, testID, stageID, prodID        string
 	sourcePath, sourceURL, destPath, destURL string
 )
 
@@ -29,23 +53,26 @@ Flags:
 
 // Quarterback function controls the flow of the program
 func Quarterback() {
+	sites := readit("local/env.yaml")
+	yaml.Unmarshal(sites, &websites)
 	flag := os.Args[1]
 	siteName = os.Args[2]
+
 	switch flag {
 	case "s2p":
-		source(stagePath, stageURL)
+		source(websites.Staging.Path, websites.Staging.URL)
 		first()
-		destination(prodPath, prodURL)
+		destination(websites.Production.Path, websites.Production.URL)
 		receiver()
 	case "p2s":
-		source(prodPath, prodURL)
+		source(websites.Production.Path, websites.Production.URL)
 		first()
-		destination(stagePath, stageURL)
+		destination(websites.Staging.Path, websites.Staging.URL)
 		receiver()
 	case "t2t":
-		source(testPath, vanTestURL)
+		source(websites.Vanity.Path, websites.Vanity.URL)
 		first()
-		destination(testPath, testURL)
+		destination(websites.Test.Path, websites.Test.URL)
 		receiver()
 	default:
 		Alert(huh)
@@ -54,7 +81,7 @@ func Quarterback() {
 
 // Create the source object
 func source(path, url string) {
-	sourcePath, sourceURL = path, url                                       //transfer local constants to main code
+	sourcePath, sourceURL = path, url                                       // Transfer local YAML contents to main code
 	sourceList := construct(sourceURL, sourcePath)                          // List of source sites in JSON format
 	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific source object
 }
@@ -66,12 +93,12 @@ func first() {
 	banner("Creating a user export file")
 	exportUsers()
 	banner("Creating the new WordPress site")
-	createSite(siteName, adminEmail)
+	createSite(siteName, websites.Email.Admin)
 }
 
 // Create the destination object
 func destination(path, url string) {
-	destPath, destURL = path, url                                     //transfer local constants to main code
+	destPath, destURL = path, url                                     // Transfer local YAML contents to main code
 	destList := construct(destURL, destPath)                          // List of destination sites in JSON format
 	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
 }

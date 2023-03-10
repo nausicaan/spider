@@ -3,6 +3,7 @@ package tasks
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -43,12 +44,22 @@ func silent(name string, task ...string) {
 	err = exec.Command(path, task...).Run()
 }
 
-// Run a terminal command, then capture and return the output as a byte
+// Run a terminal command, then capture and return the output as a byte variable
 func byteme(name string, task ...string) []byte {
 	path, err := exec.LookPath(name)
 	inspect(err)
 	osCmd, _ := exec.Command(path, task...).CombinedOutput()
 	return osCmd
+}
+
+// Read any file and return the contents as a byte variable
+func readit(file string) []byte {
+	mission, err := os.Open(file)
+	inspect(err)
+	outcome, err := io.ReadAll(mission)
+	inspect(err)
+	defer mission.Close()
+	return outcome
 }
 
 // Check for errors, print the result if found

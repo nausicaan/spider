@@ -12,7 +12,7 @@
 *.out
 
 # Dependency directories
-secrets/
+local/
 test/
 vendor/
 
@@ -20,6 +20,3 @@ vendor/
 .DS_Store
 Thumbs.db
 .idea
-
-# Standalone files
-local.go
