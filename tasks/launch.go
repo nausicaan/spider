@@ -59,17 +59,17 @@ func Quarterback() {
 	siteName = os.Args[2]
 
 	switch flag {
-	case "s2p":
+	case "-s2p":
 		source(websites.Staging.Path, websites.Staging.URL)
 		first()
 		destination(websites.Production.Path, websites.Production.URL)
 		receiver()
-	case "p2s":
+	case "-p2s":
 		source(websites.Production.Path, websites.Production.URL)
 		first()
 		destination(websites.Staging.Path, websites.Staging.URL)
 		receiver()
-	case "t2t":
+	case "-t2t":
 		source(websites.Vanity.Path, websites.Vanity.URL)
 		first()
 		destination(websites.Test.Path, websites.Test.URL)
@@ -165,7 +165,7 @@ func last() {
 	flush()
 }
 
-// Export the database tables
+// Export the WordPress database tables
 func exportDB(sourceURL string) {
 	sub := byteme("wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
 	verbose("wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
@@ -173,7 +173,7 @@ func exportDB(sourceURL string) {
 	// exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+sourceURL, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+siteName+".sql").Run()
 }
 
-// Create a user export file
+// Create a user export file in JSON format
 func exportUsers() {
 	// exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
 	// verbose("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json")
@@ -181,25 +181,25 @@ func exportUsers() {
 	inspect(os.WriteFile("/data/temp/"+siteName+".json", people, 0666))
 }
 
-// Create the new WordPress site
+// Create a new WordPress site
 func createSite(title, email string) {
 	// exec.Command("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email, "--quiet").Run()
 	verbose("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email)
 }
 
-// Backup the database
+// Backup the WordPress SQL database
 func backupDB() {
 	// exec.Command("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql", "--quiet").Run()
 	verbose("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql")
 }
 
-// Replace the destination (did) blog_id with that of the source (sid)
+// Replace the destination (did) blog_id's with that of the source (sid)
 func replaceIDs(sid, did string) {
 	// exec.Command("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql").Run()
 	verbose("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql")
 }
 
-// Import the database tables
+// Import the WordPress SQL database tables
 func importDB() {
 	// exec.Command("wp", "db", "import", "/data/temp/"+siteName+".sql", "--quiet").Run()
 	verbose("wp", "db", "import", "/data/temp/"+siteName+".sql")
@@ -211,7 +211,7 @@ func linkFix() {
 	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL)
 }
 
-// Copy the site assets over
+// Copy the WordPress site assets over
 func assetCopy(sid, did string) {
 	// exec.Command("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/").Run()
 	verbose("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/")
@@ -229,7 +229,7 @@ func uploadsFolderEscapes(sid, did string) {
 	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did)
 }
 
-// Catch any lingering http addresses
+// Catch any lingering http addresses and convert them to https
 func httpFind() {
 	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://", "--quiet").Run()
 	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://")

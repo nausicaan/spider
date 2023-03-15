@@ -10,18 +10,17 @@ import (
 )
 
 const (
-	automatic      string = "\033[0m"
-	bgRed          string = "\033[41m"
-	fgYellow       string = "\033[33m"
-	fgBrightYellow string = "\033[93m"
-	halt           string = "program halted "
-	huh            string = "Unrecognized flag detected -"
+	automatic string = "\033[0m"
+	bgRed     string = "\033[41m"
+	fgYellow  string = "\033[33m"
+	halt      string = "program halted "
+	huh       string = "Unrecognized flag detected -"
 )
 
 var reader = bufio.NewReader(os.Stdin)
 
 // Get user input via screen prompt
-func converse(prompt string) string {
+func solicit(prompt string) string {
 	fmt.Print(prompt)
 	response, _ := reader.ReadString('\n')
 	return strings.TrimSpace(response)
@@ -78,8 +77,10 @@ func banner(message string) {
 
 // Tell the program what to do based on the results of a --dry-run
 func direct(answer, nav string) {
-	if answer == "Y" {
+	if strings.ToLower(answer) == "y" {
 		proceed(nav)
+	} else {
+		os.Exit(0)
 	}
 }
 
@@ -102,7 +103,7 @@ func proceed(action string) {
 // Solicite user confirmation after completion of a --dry-run
 func confirm(d string) string {
 	fmt.Println(d)
-	answer := converse("Does this output seem acceptable, shall we continue without the --dry-run flag?")
+	answer := solicit("Does this output seem acceptable, shall we continue without the --dry-run flag? (y/n) ")
 	return answer
 }
 

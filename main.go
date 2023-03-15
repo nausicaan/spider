@@ -8,14 +8,14 @@ import (
 
 // Constant declarations
 const (
-	zero string = "Insufficient arguments supplied -"
+	few  string = "Insufficient arguments supplied -"
 	many string = "Too many arguments supplied -"
 )
 
 // Start of the Spider application
 func main() {
 	if len(os.Args) < 3 {
-		t.Alert(zero)
+		t.Alert(few)
 	} else if len(os.Args) > 3 {
 		t.Alert(many)
 	} else {
