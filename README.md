@@ -2,6 +2,8 @@
 
 Spider is a WordPress website (blog) deployment tool. It Automates the process of launching and transfering database assets to a new WordPress blog site.
 
+![Spider](spider.jpg)
+
 ## Prerequisites
 
 - Googles' [Go language](https://go.dev) installed to enable building executables from source code.
