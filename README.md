@@ -4,6 +4,8 @@ Spider is a WordPress website (blog) deployment tool. It Automates the process o
 
 ![Spider](spider.jpg)
 
+*Image by [brgfx](https://www.freepik.com/author/brgfx) on [Freepik](https://www.freepik.com)*
+
 ## Prerequisites
 
 - Googles' [Go language](https://go.dev) installed to enable building executables from source code.
