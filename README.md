@@ -2,7 +2,7 @@
 
 Spider is a WordPress website (blog) deployment tool. It Automates the process of launching and transfering database assets to a new WordPress blog site.
 
-![Spider](spider.png)
+![Spider](spider.webp)
 
 *Image by [brgfx](https://www.freepik.com/author/brgfx) on [Freepik](https://www.freepik.com)*
 
