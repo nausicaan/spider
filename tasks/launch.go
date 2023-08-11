@@ -107,7 +107,7 @@ func destination(path, url string) {
 func construct(url, path string) []Blog {
 	var blog []Blog
 	// query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json").Output()
-	query := byteme("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json")
+	query := execute("-c", "wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json")
 	json.Unmarshal(query, &blog)
 	return blog
 }
@@ -167,8 +167,8 @@ func last() {
 
 // Export the WordPress database tables
 func exportDB(sourceURL string) {
-	sub := byteme("wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
-	verbose("wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
+	sub := execute("-c", "wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
+	execute("-v", "wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
 	// exec.Command("wp", "db", "export", "--tables=$("+string(sub)+")", "--quiet", "/data/temp/"+siteName+".sql").Run()
 	// exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+sourceURL, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+siteName+".sql").Run()
 }
@@ -176,73 +176,73 @@ func exportDB(sourceURL string) {
 // Create a user export file in JSON format
 func exportUsers() {
 	// exec.Command("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json").Run()
-	// verbose("/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json")
-	people := byteme("wp", "user", "list", "--url="+sourceURL, "--path="+"/data/www-app/"+sourcePath+"/current/web/wp", "--format=json")
+	// execute("-v", "/bin/bash", "-c", "/data/scripts/user_export.py", "-p", "/data/www-app/"+sourcePath+"/current/web/wp", "-u", sourceURL, "-o", "/data/temp/"+siteName+".json")
+	people := execute("-c", "wp", "user", "list", "--url="+sourceURL, "--path="+"/data/www-app/"+sourcePath+"/current/web/wp", "--format=json")
 	inspect(os.WriteFile("/data/temp/"+siteName+".json", people, 0666))
 }
 
 // Create a new WordPress site
 func createSite(title, email string) {
 	// exec.Command("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email, "--quiet").Run()
-	verbose("wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email)
+	execute("-v", "wp", "site", "create", "--url=https://"+destURL+"/"+siteName+"/", "--title="+title, "--email="+email)
 }
 
 // Backup the WordPress SQL database
 func backupDB() {
 	// exec.Command("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql", "--quiet").Run()
-	verbose("wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql")
+	execute("-v", "wp", "db", "export", "--path=/data/www-app/"+destPath+"/current/web/wp", "/data/temp/backup.sql")
 }
 
 // Replace the destination (did) blog_id's with that of the source (sid)
 func replaceIDs(sid, did string) {
 	// exec.Command("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql").Run()
-	verbose("sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql")
+	execute("-v", "sed", "-i", "'s/wp_"+sid+"_/wp_"+did+"_/g'", "/data/temp/"+siteName+".sql")
 }
 
 // Import the WordPress SQL database tables
 func importDB() {
 	// exec.Command("wp", "db", "import", "/data/temp/"+siteName+".sql", "--quiet").Run()
-	verbose("wp", "db", "import", "/data/temp/"+siteName+".sql")
+	execute("-v", "wp", "db", "import", "/data/temp/"+siteName+".sql")
 }
 
 // Correct the links with search-replace
 func linkFix() {
 	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL, "--quiet").Run()
-	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL)
+	execute("-v", "wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", sourceURL, destURL)
 }
 
 // Copy the WordPress site assets over
 func assetCopy(sid, did string) {
 	// exec.Command("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/").Run()
-	verbose("rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/")
+	execute("-v", "rsync", "-a", "/data/www-assets/"+sourcePath+"/uploads/sites/"+sid+"/", "/data/www-assets/"+destPath+"/uploads/sites/"+did+"/")
 }
 
 // Correct the references to the uploads folder
 func uploadsFolder(sid, did string) {
 	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did, "--quiet").Run()
-	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did)
+	execute("-v", "wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app/uploads/sites/"+sid, "app/uploads/sites/"+did)
 }
 
 // Correct any unescaped folders due to Gutenberg Blocks
 func uploadsFolderEscapes(sid, did string) {
 	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did, "--quiet").Run()
-	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did)
+	execute("-v", "wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "app\\/uploads\\/sites\\/"+sid, "app\\/uploads\\/sites\\/"+did)
 }
 
 // Catch any lingering http addresses and convert them to https
 func httpFind() {
 	// exec.Command("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://", "--quiet").Run()
-	verbose("wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://")
+	execute("-v", "wp", "search-replace", "--url="+destURL, "--all-tables-with-prefix", "http://", "https://")
 }
 
 // Remap the users to match their new ID
 func remap() {
 	// exec.Command("/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json").Run()
-	verbose("/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json")
+	execute("-v", "/bin/bash", "-c", "/data/scripts/user_import.py", "-p", "/data/www-app/"+destPath+"/current/web/wp", "-u", destURL, "-i ", "/data/temp/"+siteName+".json")
 }
 
 // Flush the WordPress cache
 func flush() {
 	// exec.Command("wp", "cache", "flush", "--quiet").Run()
-	verbose("wp", "cache", "flush")
+	execute("-v", "wp", "cache", "flush")
 }

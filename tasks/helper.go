@@ -26,29 +26,21 @@ func solicit(prompt string) string {
 	return strings.TrimSpace(response)
 }
 
-// Run standard terminal commands and display the output
-func verbose(name string, task ...string) {
-	path, err := exec.LookPath(name)
-	osCmd := exec.Command(path, task...)
-	osCmd.Stdout = os.Stdout
-	osCmd.Stderr = os.Stderr
-	err = osCmd.Run()
-	inspect(err)
-}
-
-// Run standard terminal commands and display the output
-func silent(name string, task ...string) {
-	path, err := exec.LookPath(name)
-	inspect(err)
-	err = exec.Command(path, task...).Run()
-}
-
-// Run a terminal command, then capture and return the output as a byte variable
-func byteme(name string, task ...string) []byte {
-	path, err := exec.LookPath(name)
-	inspect(err)
-	osCmd, _ := exec.Command(path, task...).CombinedOutput()
-	return osCmd
+func execute(variation, task string, args ...string) []byte {
+	osCmd := exec.Command(task, args...)
+	switch variation {
+	case "-e":
+		exec.Command(task, args...).CombinedOutput()
+	case "-c":
+		both, _ := osCmd.CombinedOutput()
+		return both
+	case "-v":
+		osCmd.Stdout = os.Stdout
+		osCmd.Stderr = os.Stderr
+		err := osCmd.Run()
+		inspect(err)
+	}
+	return nil
 }
 
 // Read any file and return the contents as a byte variable
