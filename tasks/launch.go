@@ -3,11 +3,9 @@ package tasks
 import (
 	"encoding/json"
 	"os"
-
-	"gopkg.in/yaml.v3"
 )
 
-// Blog holds converted json data
+// Blog holds converted JSON data
 type Blog struct {
 	BlogID      string `json:"blog_id"`
 	URL         string `json:"url"`
@@ -15,25 +13,25 @@ type Blog struct {
 	Registered  string `json:"registered"`
 }
 
-// Platform holds the yaml data
+// Platform holds the JSON data
 type Platform struct {
-	GWW        Website `yaml:"gww"`
-	Production Website `yaml:"production"`
-	Staging    Website `yaml:"staging"`
-	Test       Website `yaml:"test"`
-	Vanity     Website `yaml:"vanity"`
-	Email      Person  `yaml:"email"`
+	GWW        Website `json:"gww"`
+	Production Website `json:"production"`
+	Staging    Website `json:"staging"`
+	Test       Website `json:"test"`
+	Vanity     Website `json:"vanity"`
+	Email      Person  `json:"email"`
 }
 
-// Website holds the yaml data
+// Website holds the JSON data
 type Website struct {
-	URL  string `yaml:"url"`
-	Path string `yaml:"path"`
+	URL  string `json:"url"`
+	Path string `json:"path"`
 }
 
-// Person holds the yaml data
+// Person holds the JSON data
 type Person struct {
-	Admin string `yaml:"admin"`
+	Admin string `json:"admin"`
 }
 
 // Variable declarations
@@ -53,8 +51,8 @@ Flags:
 
 // Quarterback function controls the flow of the program
 func Quarterback() {
-	sites := readit("local/env.yaml")
-	yaml.Unmarshal(sites, &websites)
+	sites := readit("local/env.json")
+	json.Unmarshal(sites, &websites)
 	flag := os.Args[1]
 	siteName = os.Args[2]
 
@@ -81,7 +79,7 @@ func Quarterback() {
 
 // Create the source object
 func source(path, url string) {
-	sourcePath, sourceURL = path, url                                       // Transfer local YAML contents to main code
+	sourcePath, sourceURL = path, url                                       // Transfer local JSON contents to main code
 	sourceList := construct(sourceURL, sourcePath)                          // List of source sites in JSON format
 	sourceOBJ = aquireID("https://"+sourceURL+"/"+siteName+"/", sourceList) // Creates a specific source object
 }
@@ -98,12 +96,12 @@ func first() {
 
 // Create the destination object
 func destination(path, url string) {
-	destPath, destURL = path, url                                     // Transfer local YAML contents to main code
+	destPath, destURL = path, url                                     // Transfer local JSON contents to main code
 	destList := construct(destURL, destPath)                          // List of destination sites in JSON format
 	destOBJ = aquireID("https://"+destURL+"/"+siteName+"/", destList) // The specific destination object
 }
 
-// Query WordPress for a list of all sites and map the json data to a struct array
+// Query WordPress for a list of all sites and map the JSON data to a struct array
 func construct(url, path string) []Blog {
 	var blog []Blog
 	// query, _ := exec.Command("wp", "site", "list", "--path=/data/www-app/"+path+"/current/web/wp", "--url="+url, "--format=json").Output()
@@ -167,10 +165,10 @@ func last() {
 
 // Export the WordPress database tables
 func exportDB(sourceURL string) {
-	sub := execute("-c", "wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
-	execute("-v", "wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
 	// exec.Command("wp", "db", "export", "--tables=$("+string(sub)+")", "--quiet", "/data/temp/"+siteName+".sql").Run()
 	// exec.Command("wp", "db", "export", "--tables=$(wp db tables", "--url="+sourceURL, "--all-tables-with-prefix", "--format=csv)", "/data/temp/"+siteName+".sql").Run()
+	sub := execute("-c", "wp db tables", "--url="+sourceURL+"--all-tables-with-prefix --format=csv")
+	execute("-v", "wp", "db", "export", "--tables=$("+string(sub)+")", "/data/temp/"+siteName+".sql")
 }
 
 // Create a user export file in JSON format
