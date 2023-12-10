@@ -1,11 +1,5 @@
 package main
 
-import (
-	"os"
-
-	t "github.com/nausicaan/spider/tasks"
-)
-
 // Constant declarations
 const (
 	few  string = "Insufficient arguments supplied -"
@@ -14,11 +8,11 @@ const (
 
 // Start of the Spider application
 func main() {
-	if len(os.Args) < 3 {
-		t.Alert(few)
-	} else if len(os.Args) > 3 {
-		t.Alert(many)
+	if len(flag) < 3 {
+		alert(few)
+	} else if len(flag) > 3 {
+		alert(many)
 	} else {
-		t.Quarterback()
+		quarterback()
 	}
 }

@@ -1,4 +1,4 @@
-package tasks
+package main
 
 import (
 	"encoding/json"
@@ -36,6 +36,7 @@ type Person struct {
 
 // Variable declarations
 var (
+	flag                                     = os.Args[1]
 	websites                                 Platform
 	testObj, sourceOBJ, destOBJ              Blog
 	siteName, testID, stageID, prodID        string
@@ -50,10 +51,9 @@ Flags:
 */
 
 // Quarterback function controls the flow of the program
-func Quarterback() {
+func quarterback() {
 	sites := readit("local/env.json")
 	json.Unmarshal(sites, &websites)
-	flag := os.Args[1]
 	siteName = os.Args[2]
 
 	switch flag {
@@ -73,7 +73,7 @@ func Quarterback() {
 		destination(websites.Test.Path, websites.Test.URL)
 		receiver()
 	default:
-		Alert(huh)
+		alert(huh)
 	}
 }
 

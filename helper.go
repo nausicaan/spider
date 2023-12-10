@@ -1,4 +1,4 @@
-package tasks
+package main
 
 import (
 	"bufio"
@@ -26,6 +26,7 @@ func solicit(prompt string) string {
 	return strings.TrimSpace(response)
 }
 
+// Run standard terminal commands
 func execute(variation, task string, args ...string) []byte {
 	osCmd := exec.Command(task, args...)
 	switch variation {
@@ -100,7 +101,7 @@ func confirm(d string) string {
 }
 
 // Alert prints a colourized error message
-func Alert(message string) {
+func alert(message string) {
 	fmt.Println(bgRed, message, halt)
 	fmt.Println(automatic)
 }
