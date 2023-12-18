@@ -4,7 +4,7 @@ Spider is a WordPress website (blog) deployment tool. It Automates the process o
 
 ![Spider](spider.webp)
 
-*Image by [brgfx](https://www.freepik.com/author/brgfx) on [Freepik](https://www.freepik.com)*
+*Image by [relato](https://www.vectorstock.com/royalty-free-vectors/vectors-by_relato) on [VectorStock](https://www.vectorstock.com)*
 
 ## Prerequisites
 
